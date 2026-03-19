@@ -4,6 +4,7 @@ import frontLights1 from "../assets/Lights/Front-lights1.png";
 import frontLights2 from "../assets/Lights/Front-lights2.png";
 import rearLights1 from "../assets/Lights/Rare-lights1.png";
 import rearLights2 from "../assets/Lights/Rare-lights2.png";
+import gariYakoLogo from "../assets/Company-logo/gariyako_logo.png"
 
 const placeholders = [
   "Search by make",
@@ -27,17 +28,14 @@ function Header() {
   }, []);
 
   return (
-    <header className="relative bg-[#001E4D] md:h-79"> {/* make header relative so the
-                                                   image grid can be positioned */}
+    <header className="relative bg-[#0f0f0f] md:h-79"> 
       {/* nav / logo / search etc. */}
       <div className="relative z-10">
         <div className="flex items-center justify-between h-16">
           {/* LOGO  */}
           <div className="flex items-center gap-2">
-            <div className="bg-[#FF6B35] text-white p-2 rounded-lg">
-              <Car className="text-blue-500" size={28} />
-            </div>
-            <span className="font-bold text-lg text-black">GariYako</span>
+            <img src={gariYakoLogo} alt="GariYako Logo" className="w-50 h-50" />
+            {/* <span className="text-white font-bold text-lg">GariYako</span> */}
           </div>
 
           {/* DESKTOP NAVIGATION  */}
@@ -96,7 +94,7 @@ function Header() {
           </div>
           {/* MOBILE NAVIGATION  */}
           <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
-            <Menu className="w-6 h-6" />
+            <Menu className="w-6 h-6 opacity-100 bg-amber-50" />
           </button>
         </div>
 

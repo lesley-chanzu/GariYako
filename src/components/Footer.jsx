@@ -6,7 +6,7 @@ const Footer = () => {
       { name: "About us", href: "#" },
       { name: "Contact us", href: "#" },
       { name: "Authors and experts", href: "#" },
-      { name: "Carrow newsroom", href: "#" },
+      { name: "GariYako newsroom", href: "#" },
       { name: "Official Carrow Merchandise", href: "#" },
     ],
     legal: [
