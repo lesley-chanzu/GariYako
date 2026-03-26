@@ -570,6 +570,37 @@ function valuationResult({ onReset, conditon, location, carData, result}){
 
       {/* How we calculated it and got to that number(show to customer)  */}
       
+      <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
+        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+          How we got your car's price:
+        </div>
+        {[
+          { label: `Base price — ${carData.make} ${carData.model} ${carData.year}`,
+            value: formatCurrency(CarDatabase[carData.make]?.[carData.model]?.[carData.year] ?? 0),
+            color: 'text-gray-700' },
+          { label: `Age depreciation (${new Date().getFullYear() - carData.year} yrs)`,
+            value: `−${(getAgeDepreciationFactor(new Date().getFullYear() - carData.year) * 100).toFixed(0)}%`,
+            color: 'text-red-500' },
+          { label: `Mileage (${carData.mileage.toLocaleString()} km)`,
+            value: getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) >= 0
+              ? `+${(getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) * 100).toFixed(1)}% bonus`
+              : `${(getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) * 100).toFixed(1)}% penalty`,
+            color: getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) >= 0
+              ? 'text-emerald-600' : 'text-red-500' },
+          { label: `Condition: ${conditionObj?.label}`,
+            value: `×${conditionObj?.multiplier}`,
+            color: conditionObj?.multiplier >= 1 ? 'text-emerald-600' : 'text-red-500' },
+          { label: `Location: ${locationObj?.label}`,
+            value: `×${locationObj?.multiplier}`,
+            color: locationObj?.multiplier < 1 ? 'text-red-500' : 'text-gray-700' },
+        ].map((row) => (
+          <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+            <span className="text-sm text-gray-500">{row.label}</span>
+            <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
+          </div>
+        ))}
+      </div>
+
     </div>
 
   );
