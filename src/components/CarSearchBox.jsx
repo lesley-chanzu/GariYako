@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { Search, X as CloseIcon, ChevronDown } from "lucide-react";
+import {
+  Search,
+  X as CloseIcon,
+  ChevronDown,
+  CheckCircle2,
+} from "lucide-react";
 
 //Craeting the valuation engine
 //FLOW:
@@ -17,22 +22,94 @@ import { Search, X as CloseIcon, ChevronDown } from "lucide-react";
 // Each entry mimica what a real NTSA record might look like, with registration number as the key and details as the value
 
 const MOCK_NTSA_DATABASE = {
-  "KDY 123R": { make: "Toyota", model: "Corolla", year: 2015, mileage: 75000 },
-  "KDW 726U": { make: "Honda", model: "Civic", year: 2017, mileage: 50000 },
-  "KDA 229T": { make: "Nissan", model: "Sentra", year: 2016, mileage: 60000 },
-  "KDF 674P": { make: "Mazda", model: "Atenza", year: 2018, mileage: 30000 },
-  "KDC 987L": { make: "Subaru", model: "Impreza", year: 2014, mileage: 90000 },
-  "KDD 399F": { make: "Toyota", model: "Auris", year: 2014, mileage: 36057 },
-  "KAX 673D": { make: "Nissan", model: "Sunny", year: 2000, mileage: 330000 },
+  "KDY 123R": {
+    make: "Toyota",
+    model: "Corolla",
+    year: 2015,
+    mileage: 75000,
+    color: "Silver",
+    owners: 1,
+  },
+  "KDW 726U": {
+    make: "Honda",
+    model: "Civic",
+    year: 2017,
+    mileage: 50000,
+    color: "Blue",
+    owners: 2,
+  },
+  "KDA 229T": {
+    make: "Nissan",
+    model: "Sentra",
+    year: 2016,
+    mileage: 60000,
+    color: "White",
+    owners: 1,
+  },
+  "KDF 674P": {
+    make: "Mazda",
+    model: "Atenza",
+    year: 2018,
+    mileage: 30000,
+    color: "Black",
+    owners: 1,
+  },
+  "KDC 987L": {
+    make: "Subaru",
+    model: "Impreza",
+    year: 2014,
+    mileage: 90000,
+    color: "Red",
+    owners: 1,
+  },
+  "KDD 399F": {
+    make: "Toyota",
+    model: "Auris",
+    year: 2014,
+    mileage: 36057,
+    color: "Gray",
+    owners: 1,
+  },
+  "KAX 673D": {
+    make: "Nissan",
+    model: "Sunny",
+    year: 2000,
+    mileage: 330000,
+    color: "Green",
+    owners: 1,
+  },
   "KBG 853W": {
     make: "Subaru",
     model: "Forester",
     year: 2010,
     mileage: 150000,
+    color: "Silver",
+    owners: 1,
   },
-  "KBY 324X": { make: "Toyota", model: "Prado", year: 2012, mileage: 234032 },
-  "KDZ 753R": { make: "Tesla", model: "Model 3", year: 2020, mileage: 20000 },
-  "KDJ 376J": { make: "Mazda", model: "CX-5", year: 2019, mileage: 45000 },
+  "KBY 324X": {
+    make: "Toyota",
+    model: "Prado",
+    year: 2012,
+    mileage: 234032,
+    color: "White",
+    owners: 1,
+  },
+  "KDZ 753R": {
+    make: "Tesla",
+    model: "Model 3",
+    year: 2020,
+    mileage: 20000,
+    color: "Black",
+    owners: 1,
+  },
+  "KDJ 376J": {
+    make: "Mazda",
+    model: "CX-5",
+    year: 2019,
+    mileage: 45000,
+    color: "Blue",
+    owners: 1,
+  },
 };
 
 //Simulating an API call to fetch car details based on registration number with a short delay to mimic network latency
@@ -312,7 +389,7 @@ function buildRange(mid) {
 }
 
 //The MASTER calculation function that takes all the factors into account to produce a final valuation range for the user's car
-function calculateVAluation({
+function calculateValuation({
   make,
   model,
   year,
@@ -342,6 +419,162 @@ function formatCurrency(num) {
   if (num >= 1000) return `KSH ${Math.round(num / 1000)}K`;
   return `KSH ${num.localString()}`;
 }
+
+//===================================
+//Step components
+//===================================
+
+//step.1 => COnfirm car details returned from lookup and ask for confirmation "Is this your car? Make, model, year, mileage, etc."
+
+function ConfirmCard({ carData, regNumber, onConfirm, onNotMyCar }) {
+  return (
+    <div className="mt-6 animate-fade-in">
+      <div className="bg-emerald-100 border border-emerald-300 rounded-2xl p-5">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 bg-emerald-300 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
+            🚗
+          </div>
+          <div className="felx-1">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="text-emerald-800 text-sm font-semibold">
+                Vehicle Found
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">
+              {carData.year} {carData.make} {carData.model}
+            </h3>
+            <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
+              <span>🎨 {carData.color}</span>
+              <span>🛣️ {carData.mileage.toLocaleString()} km</span>
+              <span>👤 {carData.owners} owner(s)</span>
+              <span>📍 Registered as: {regNumber}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-5">
+          <button className="flex-1 bg-teal-500 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm" onClick={onConfirm}>
+            Yes, that's my car
+          </button>
+          <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-xl transition-colors text-sm" onClick={onNotMyCar}>
+            No, that's not my car
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+
+//============================
+// step.2 => Condition picker
+//============================
+function ConditionPicker({ value, onChange}) {
+  return (
+    <div className="mt-6 animate-fade-in">
+      <h3 className="text-lg font-bold text-gray-900mb-1">What's the condition of your car?</h3>
+      <p className="text-gray-500 text-sm mb-4">Be honest about your car's condition to get an accurate valuation. Dealers will inspect before buyin </p>
+      <div className="grid grid-cols-2 gap-3">
+        {conditionsMultiplier.map((c) => (
+          <button
+            key={c.id}
+            onClick={onChange}
+            className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 hover:scale-[1.02]
+              ${value === c.id ? 'border-teal-500 bg-teal-50 shadow-md' : 'border-gray-200 bg-white hover:border-gray-400'}
+              `}
+          >
+            <div className="text-2xl mb-2">{c.emoji}</div>
+            <div className="font-bold text-gray-900 text-sm">{c.label}</div>
+            <div className="text-gray-400 text-xs mt-1.5 leading-tight">{c.desc}</div>
+            <div className={`text-xs font-bold mt-2 ${c.multiplier >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
+              {c.multiplier >= 1 ? `+${((c.multiplier - 1) * 100).toFixed(0)}%` : `${((c.multiplier - 1) * 100).toFixed(0)}%`}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+//==============================
+//step.3 => Location Picker
+//==============================
+function LocationPicker({ value, onChange}) {
+  return(
+    <div className="mt-6 animate-fade-in">
+      <h3 className="text-lg font-bold text-gray-900 mb-1">Where is the car Located</h3>
+      <p className="text-gray-500 text-sm mb-4">Location affects demand across Kenya</p>
+      <div className="grid grid-cols-2 gap-3">
+        {locationsMultiplier.map((l) => (
+          <button
+            key={l.id}
+            onClick={onChange}
+            className={`p-3 rounded-xl border-2 text-left transition-all duration-200
+              ${value === l.id ? `border-teal-500 bg-teal-50 shadow-sm` : `border-gray-200 bg-white hover:border-gray-300`}
+              `}
+          >
+              <div className="text-xl mb-1">{l.emoji}</div>
+              <div className="font-semibold text-gray-800 text-sm">{l.label}</div>
+              <div className="text-sm text-gray-400">
+                {l.multiplier === 1 ? `top demand` : '*${l.multiplier'}
+              </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+//================================
+//step.4 => Valuation Result
+//================================
+function valuationResult({ onReset, conditon, location, carData, result}){
+  const conditionObj = conditionsMultiplier.find((c) => c.id === condition);
+  const locationObj = locationsMultiplier.find((l) => l.id === location);
+
+  return(
+    <div className="mt-6 animate-fade-in">
+      {/* Result banner  */}
+      <div className="bg-gray-900 rounded-2xl p-6 text-white mb-4">
+        <div className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-3">
+          GariYako Estimate - {carData.year} {carData.make} {carData.model}
+        </div>
+
+      {/* Three Value range */}
+        <div className="flex justify-between items-end mb-3">
+          <div>
+            <div className="text-gray-500 text-xs mb-0.5">Low</div>
+            <div className="text-white font-bold text-lg">{formatCurrency(result.low)}</div>
+          </div>
+          <div>
+            <div className="text-gray-400 text-xs mb-0.5">Best Estimate</div>
+            <div className="text-teal-400 font-black text-4xl leading-none">{formatCurrency(result.mid)}</div>
+          </div>
+          <div>
+            <div className="text-gray-500 text-xs mb-0.5">High</div>
+            <div className="text-emerald-500 font-black font-bold text-lg">{formatCurrency(result.high)}</div>
+          </div>
+        </div>
+
+        {/* Visual Bar  */}
+        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-full w-full bg-gradient-to-r from-yellow-400 via-teal-400 to-emerald-500 rounded-full"/>
+        </div>
+        <p className="text-gray-500 text-xs text-center mt-2">
+          Based on current Kenyan market data
+        </p>
+      </div>
+
+
+      {/* How we calculated it and got to that number(show to customer)  */}
+      
+    </div>
+
+  );
+}
+
 
 const CarSearchBox = () => {
   const [regNumber, setRegNumber] = useState("");
