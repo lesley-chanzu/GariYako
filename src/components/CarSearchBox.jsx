@@ -4,6 +4,7 @@ import {
   X as CloseIcon,
   ChevronDown,
   CheckCircle2,
+  ArrowLeft,
 } from "lucide-react";
 
 //Craeting the valuation engine
@@ -454,42 +455,57 @@ function ConfirmCard({ carData, regNumber, onConfirm, onNotMyCar }) {
         </div>
 
         <div className="flex gap-3 mt-5">
-          <button className="flex-1 bg-teal-500 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm" onClick={onConfirm}>
+          <button
+            className="flex-1 bg-teal-500 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+            onClick={onConfirm}
+          >
             Yes, that's my car
           </button>
-          <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-xl transition-colors text-sm" onClick={onNotMyCar}>
+          <button
+            className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-xl transition-colors text-sm"
+            onClick={onNotMyCar}
+          >
             No, that's not my car
           </button>
         </div>
-
       </div>
     </div>
   );
 }
 
-
 //============================
 // step.2 => Condition picker
 //============================
-function ConditionPicker({ value, onChange}) {
+function ConditionPicker({ value, onChange }) {
   return (
     <div className="mt-6 animate-fade-in">
-      <h3 className="text-lg font-bold text-gray-900mb-1">What's the condition of your car?</h3>
-      <p className="text-gray-500 text-sm mb-4">Be honest about your car's condition to get an accurate valuation. Dealers will inspect before buyin </p>
+      <h3 className="text-lg font-bold text-gray-900mb-1">
+        What's the condition of your car?
+      </h3>
+      <p className="text-gray-500 text-sm mb-4">
+        Be honest about your car's condition to get an accurate valuation.
+        Dealers will inspect before buyin{" "}
+      </p>
       <div className="grid grid-cols-2 gap-3">
         {conditionsMultiplier.map((c) => (
           <button
             key={c.id}
             onClick={onChange}
             className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 hover:scale-[1.02]
-              ${value === c.id ? 'border-teal-500 bg-teal-50 shadow-md' : 'border-gray-200 bg-white hover:border-gray-400'}
+              ${value === c.id ? "border-teal-500 bg-teal-50 shadow-md" : "border-gray-200 bg-white hover:border-gray-400"}
               `}
           >
             <div className="text-2xl mb-2">{c.emoji}</div>
             <div className="font-bold text-gray-900 text-sm">{c.label}</div>
-            <div className="text-gray-400 text-xs mt-1.5 leading-tight">{c.desc}</div>
-            <div className={`text-xs font-bold mt-2 ${c.multiplier >= 1 ? 'text-emerald-600' : 'text-red-500'}`}>
-              {c.multiplier >= 1 ? `+${((c.multiplier - 1) * 100).toFixed(0)}%` : `${((c.multiplier - 1) * 100).toFixed(0)}%`}
+            <div className="text-gray-400 text-xs mt-1.5 leading-tight">
+              {c.desc}
+            </div>
+            <div
+              className={`text-xs font-bold mt-2 ${c.multiplier >= 1 ? "text-emerald-600" : "text-red-500"}`}
+            >
+              {c.multiplier >= 1
+                ? `+${((c.multiplier - 1) * 100).toFixed(0)}%`
+                : `${((c.multiplier - 1) * 100).toFixed(0)}%`}
             </div>
           </button>
         ))}
@@ -501,11 +517,15 @@ function ConditionPicker({ value, onChange}) {
 //==============================
 //step.3 => Location Picker
 //==============================
-function LocationPicker({ value, onChange}) {
-  return(
+function LocationPicker({ value, onChange }) {
+  return (
     <div className="mt-6 animate-fade-in">
-      <h3 className="text-lg font-bold text-gray-900 mb-1">Where is the car Located</h3>
-      <p className="text-gray-500 text-sm mb-4">Location affects demand across Kenya</p>
+      <h3 className="text-lg font-bold text-gray-900 mb-1">
+        Where is the car Located
+      </h3>
+      <p className="text-gray-500 text-sm mb-4">
+        Location affects demand across Kenya
+      </p>
       <div className="grid grid-cols-2 gap-3">
         {locationsMultiplier.map((l) => (
           <button
@@ -515,11 +535,11 @@ function LocationPicker({ value, onChange}) {
               ${value === l.id ? `border-teal-500 bg-teal-50 shadow-sm` : `border-gray-200 bg-white hover:border-gray-300`}
               `}
           >
-              <div className="text-xl mb-1">{l.emoji}</div>
-              <div className="font-semibold text-gray-800 text-sm">{l.label}</div>
-              <div className="text-sm text-gray-400">
-                {l.multiplier === 1 ? `top demand` : '*${l.multiplier'}
-              </div>
+            <div className="text-xl mb-1">{l.emoji}</div>
+            <div className="font-semibold text-gray-800 text-sm">{l.label}</div>
+            <div className="text-sm text-gray-400">
+              {l.multiplier === 1 ? `top demand` : "*${l.multiplier"}
+            </div>
           </button>
         ))}
       </div>
@@ -530,11 +550,11 @@ function LocationPicker({ value, onChange}) {
 //================================
 //step.4 => Valuation Result
 //================================
-function valuationResult({ onReset, conditon, location, carData, result}){
+function valuationResult({ onReset, conditon, location, carData, result }) {
   const conditionObj = conditionsMultiplier.find((c) => c.id === condition);
   const locationObj = locationsMultiplier.find((l) => l.id === location);
 
-  return(
+  return (
     <div className="mt-6 animate-fade-in">
       {/* Result banner  */}
       <div className="bg-gray-900 rounded-2xl p-6 text-white mb-4">
@@ -542,70 +562,118 @@ function valuationResult({ onReset, conditon, location, carData, result}){
           GariYako Estimate - {carData.year} {carData.make} {carData.model}
         </div>
 
-      {/* Three Value range */}
+        {/* Three Value range */}
         <div className="flex justify-between items-end mb-3">
           <div>
             <div className="text-gray-500 text-xs mb-0.5">Low</div>
-            <div className="text-white font-bold text-lg">{formatCurrency(result.low)}</div>
+            <div className="text-white font-bold text-lg">
+              {formatCurrency(result.low)}
+            </div>
           </div>
           <div>
             <div className="text-gray-400 text-xs mb-0.5">Best Estimate</div>
-            <div className="text-teal-400 font-black text-4xl leading-none">{formatCurrency(result.mid)}</div>
+            <div className="text-teal-400 font-black text-4xl leading-none">
+              {formatCurrency(result.mid)}
+            </div>
           </div>
           <div>
             <div className="text-gray-500 text-xs mb-0.5">High</div>
-            <div className="text-emerald-500 font-black font-bold text-lg">{formatCurrency(result.high)}</div>
+            <div className="text-emerald-500 font-black font-bold text-lg">
+              {formatCurrency(result.high)}
+            </div>
           </div>
         </div>
 
         {/* Visual Bar  */}
         <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div className="h-full w-full bg-gradient-to-r from-yellow-400 via-teal-400 to-emerald-500 rounded-full"/>
+          <div className="h-full w-full bg-gradient-to-r from-yellow-400 via-teal-400 to-emerald-500 rounded-full" />
         </div>
         <p className="text-gray-500 text-xs text-center mt-2">
           Based on current Kenyan market data
         </p>
       </div>
 
-
       {/* How we calculated it and got to that number(show to customer)  */}
-      
+
       <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
         <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
           How we got your car's price:
         </div>
         {[
-          { label: `Base price — ${carData.make} ${carData.model} ${carData.year}`,
-            value: formatCurrency(CarDatabase[carData.make]?.[carData.model]?.[carData.year] ?? 0),
-            color: 'text-gray-700' },
-          { label: `Age depreciation (${new Date().getFullYear() - carData.year} yrs)`,
+          {
+            label: `Base price — ${carData.make} ${carData.model} ${carData.year}`,
+            value: formatCurrency(
+              CarDatabase[carData.make]?.[carData.model]?.[carData.year] ?? 0,
+            ),
+            color: "text-gray-700",
+          },
+          {
+            label: `Age depreciation (${new Date().getFullYear() - carData.year} yrs)`,
             value: `−${(getAgeDepreciationFactor(new Date().getFullYear() - carData.year) * 100).toFixed(0)}%`,
-            color: 'text-red-500' },
-          { label: `Mileage (${carData.mileage.toLocaleString()} km)`,
-            value: getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) >= 0
-              ? `+${(getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) * 100).toFixed(1)}% bonus`
-              : `${(getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) * 100).toFixed(1)}% penalty`,
-            color: getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) >= 0
-              ? 'text-emerald-600' : 'text-red-500' },
-          { label: `Condition: ${conditionObj?.label}`,
+            color: "text-red-500",
+          },
+          {
+            label: `Mileage (${carData.mileage.toLocaleString()} km)`,
+            value:
+              getMileeageFactor(
+                carData.mileage,
+                new Date().getFullYear() - carData.year,
+              ) >= 0
+                ? `+${(getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) * 100).toFixed(1)}% bonus`
+                : `${(getMileeageFactor(carData.mileage, new Date().getFullYear() - carData.year) * 100).toFixed(1)}% penalty`,
+            color:
+              getMileeageFactor(
+                carData.mileage,
+                new Date().getFullYear() - carData.year,
+              ) >= 0
+                ? "text-emerald-600"
+                : "text-red-500",
+          },
+          {
+            label: `Condition: ${conditionObj?.label}`,
             value: `×${conditionObj?.multiplier}`,
-            color: conditionObj?.multiplier >= 1 ? 'text-emerald-600' : 'text-red-500' },
-          { label: `Location: ${locationObj?.label}`,
+            color:
+              conditionObj?.multiplier >= 1
+                ? "text-emerald-600"
+                : "text-red-500",
+          },
+          {
+            label: `Location: ${locationObj?.label}`,
             value: `×${locationObj?.multiplier}`,
-            color: locationObj?.multiplier < 1 ? 'text-red-500' : 'text-gray-700' },
+            color:
+              locationObj?.multiplier < 1 ? "text-red-500" : "text-gray-700",
+          },
         ].map((row) => (
-          <div key={row.label} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+          <div
+            key={row.label}
+            className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
+          >
             <span className="text-sm text-gray-500">{row.label}</span>
-            <span className={`text-sm font-bold ${row.color}`}>{row.value}</span>
+            <span className={`text-sm font-bold ${row.color}`}>
+              {row.value}
+            </span>
           </div>
         ))}
       </div>
 
+      {/* //the reset button/CTAs  */}
+      <button className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-teal-100 mb-3">
+         List My Car &amp; Get Real Bids
+      </button>
+      <button
+        onClick={onReset}
+        className="w-full border-2 border-gray-200 text-gray-500 font-medium py-3 rounded-2xl text-sm hover:border-gray-300 transition-colors flex items-center justify-center gap-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Value another car
+      </button>
     </div>
-
   );
 }
 
+
+
+//This is the main component of this work
 
 const CarSearchBox = () => {
   const [regNumber, setRegNumber] = useState("");
