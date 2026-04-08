@@ -5,6 +5,7 @@ import {
   ChevronDown,
   CheckCircle2,
   ArrowLeft,
+  AlertCircle,
 } from "lucide-react";
 
 //Craeting the valuation engine
@@ -179,6 +180,7 @@ const CarDatabase = {
       2017: 1200000,
       2016: 1000000,
       2015: 850000,
+      2014: 750000,
     },
   },
   Mazda: {
@@ -249,8 +251,8 @@ const CarDatabase = {
       2017: 680000,
       2016: 600000,
       2015: 530000,
-    },
-    Sunny: {
+    },    
+   Sunny: {
       2020: 900000,
       2019: 800000,
       2018: 720000,
@@ -301,6 +303,7 @@ const CarDatabase = {
       2017: 6000000,
       2016: 5500000,
       2015: 5000000,
+      2014: 4500000,
     },
   },
 };
@@ -418,7 +421,7 @@ function formatCurrency(num) {
   if (num === null) return "N/A";
   if (num >= 1000000) return `KSH ${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `KSH ${Math.round(num / 1000)}K`;
-  return `KSH ${num.localString()}`;
+  return `KSH ${num.toLocaleString()}`;
 }
 
 //===================================
@@ -432,10 +435,10 @@ function ConfirmCard({ carData, regNumber, onConfirm, onNotMyCar }) {
     <div className="mt-6 animate-fade-in">
       <div className="bg-emerald-100 border border-emerald-300 rounded-2xl p-5">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-emerald-300 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
+          <div className="w-12 h-12 bg-emerald-300 rounded-xl flex items-center justify-center shrink-0 text-2xl">
             🚗
           </div>
-          <div className="felx-1">
+          <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span className="text-emerald-800 text-sm font-semibold">
@@ -479,7 +482,7 @@ function ConfirmCard({ carData, regNumber, onConfirm, onNotMyCar }) {
 function ConditionPicker({ value, onChange }) {
   return (
     <div className="mt-6 animate-fade-in">
-      <h3 className="text-lg font-bold text-gray-900mb-1">
+      <h3 className="text-lg font-bold text-gray-900 mb-1">
         What's the condition of your car?
       </h3>
       <p className="text-gray-500 text-sm mb-4">
@@ -490,7 +493,7 @@ function ConditionPicker({ value, onChange }) {
         {conditionsMultiplier.map((c) => (
           <button
             key={c.id}
-            onClick={onChange}
+            onClick={() => onChange(c.id)}
             className={`p-4 rounded-2xl border-2 text-left transition-all duration-200 hover:scale-[1.02]
               ${value === c.id ? "border-teal-500 bg-teal-50 shadow-md" : "border-gray-200 bg-white hover:border-gray-400"}
               `}
@@ -530,7 +533,7 @@ function LocationPicker({ value, onChange }) {
         {locationsMultiplier.map((l) => (
           <button
             key={l.id}
-            onClick={onChange}
+            onClick={() => onChange(l.id)}
             className={`p-3 rounded-xl border-2 text-left transition-all duration-200
               ${value === l.id ? `border-teal-500 bg-teal-50 shadow-sm` : `border-gray-200 bg-white hover:border-gray-300`}
               `}
@@ -538,7 +541,7 @@ function LocationPicker({ value, onChange }) {
             <div className="text-xl mb-1">{l.emoji}</div>
             <div className="font-semibold text-gray-800 text-sm">{l.label}</div>
             <div className="text-sm text-gray-400">
-              {l.multiplier === 1 ? `top demand` : "*${l.multiplier"}
+              {l.multiplier === 1 ? `top demand` : "${l.multiplier"}
             </div>
           </button>
         ))}
@@ -550,7 +553,7 @@ function LocationPicker({ value, onChange }) {
 //================================
 //step.4 => Valuation Result
 //================================
-function valuationResult({ onReset, conditon, location, carData, result }) {
+function ValuationResult({ onReset, condition, location, carData, result }) {
   const conditionObj = conditionsMultiplier.find((c) => c.id === condition);
   const locationObj = locationsMultiplier.find((l) => l.id === location);
 
@@ -578,7 +581,7 @@ function valuationResult({ onReset, conditon, location, carData, result }) {
           </div>
           <div>
             <div className="text-gray-500 text-xs mb-0.5">High</div>
-            <div className="text-emerald-500 font-black font-bold text-lg">
+            <div className="text-emerald-500 font-bold text-lg">
               {formatCurrency(result.high)}
             </div>
           </div>
@@ -586,7 +589,7 @@ function valuationResult({ onReset, conditon, location, carData, result }) {
 
         {/* Visual Bar  */}
         <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div className="h-full w-full bg-gradient-to-r from-yellow-400 via-teal-400 to-emerald-500 rounded-full" />
+          <div className="h-full w-full bg-linear-to-r from-yellow-400 via-teal-400 to-emerald-500 rounded-full" />
         </div>
         <p className="text-gray-500 text-xs text-center mt-2">
           Based on current Kenyan market data
@@ -658,7 +661,7 @@ function valuationResult({ onReset, conditon, location, carData, result }) {
 
       {/* //the reset button/CTAs  */}
       <button className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-teal-100 mb-3">
-         List My Car &amp; Get Real Bids
+        List My Car &amp; Get Real Bids
       </button>
       <button
         onClick={onReset}
@@ -669,24 +672,127 @@ function valuationResult({ onReset, conditon, location, carData, result }) {
       </button>
     </div>
   );
-}
+};
 
+// LOading spinner component to show while looking up the car details
+const LoadingSpinner = () => (
+  <div className="mt-6 flex flex-col items-center gap-3 py-4">
+    <div className="flex gap-1.5">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="w-2.5 h-2.5 bg-teal-500 rounded-full animate-bounce "
+          style={{ animationDelay: `${i * 0.2}s` }}
+        />
+      ))}
+    </div>
+    <p className="text-gray-400 text-sm">Looking up car details...</p>
+  </div>
+);
 
+//not found component to show if the registration number doesn't match any records in our mock database
+const NotFound = ({ regNumber, onReset, onTryAgain }) => (
+  <div className="mt-6 amber-50 border border-amber-200 rounded-2xl p-5">
+    <div className="flex items-start gap-3">
+      <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.6" />
+      <div>
+        <div className="font-semibold text-amber-600 mb-1">
+          Not Found
+          <span className="font-black">{regNumber.trim().toUpperCase()}</span>
+        </div>
+        <p>
+          This plate is not in our Database yet. Please check for typos or try
+          another registration number.You can still get a valuation by entering
+          the car details manually when listing your car for sale.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onTryAgain}
+            className="flex-1 bg-white border border-amber-200 text-amber-700 font-medium py-2.5 rounded-xl text-sm hover:bg-amber-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" /> Try Again
+          </button>
+          <button
+            onClick={onReset}
+            className="flex flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+          >
+            Enter Details Manually →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 //This is the main component of this work
 
 const CarSearchBox = () => {
   const [regNumber, setRegNumber] = useState("");
+  const [uiState, setUiState] = useState("idle");
+  const [carData, setCarData] = useState(null);
+  const [condition, setCarCondition] = useState("");
+  const [location, setLocation] = useState("");
+  const [result, setResult] = useState(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!regNumber.trim()) return;
-    // Handle valuation here
-    console.log("Valuation search for reg:", regNumber.trim().toUpperCase());
+  const formatRegNumber = (value) => {
+    const cleaned = value.replace(/\s/g, '').toUpperCase();
+    if (cleaned.length <= 3) return cleaned;
+    return cleaned.slice(0, 3) + ' ' + cleaned.slice(3);
   };
 
-  const handleClear = () => {
+  //This is the reset function that clears everything and takes the user back to the beginning of the flow.
+  const handleReset = () => {
     setRegNumber("");
+    setUiState("idle");
+    setCarData(null);
+    setCarCondition("");
+    setLocation("");
+    setResult(null);
+  };
+
+  // step.1 => handling submitted registration number -> trigger lookup
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!regNumber.trim()) return;
+
+    setUiState("looking up");
+    const found = await mockNTSALookup(regNumber);
+
+    if (found) {
+      setCarData(found);
+      setUiState("confirm");
+    } else {
+      setUiState("Not Found!");
+    }
+  };
+
+  //step.2 => User Confirmation -> when user agrees "Yes".
+  const handleConfirm = () => {
+    setUiState("condition");
+  };
+
+  //step.3 => the condition is selected -> mob=ve to location selection/confirmation
+  const handleConditionSelect = (val) => {
+    setCarCondition(val);
+    //small delay/latency
+    setTimeout(() => setUiState("location"), 500);
+  };
+
+  //step.4 => location has been selected -> the engine now runs the calculations
+  const handleLocationSelect = (val) => {
+    setLocation(val);
+    setTimeout(() => {
+      const res = calculateValuation({
+        make: carData.make,
+        model: carData.model,
+        year: carData.year,
+        mileage: carData.mileage,
+        condition: condition,
+        location: val, //use val directly instead of state to avoid async update issues
+      });
+      setResult(res);
+      setUiState("result");
+    }, 500);
   };
 
   return (
@@ -712,56 +818,68 @@ const CarSearchBox = () => {
         </button>
       </div>
 
-      {/* Main valuation card to get the car's true price(maybe)  */}
+      {/* Main valuation card to get the car's true price(maybe) / like the main hero?? */}
       <div className="bg-white rounded-3xl p-8 md:p-10 shadow-2xl border border-gray-100">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6 md:mb-10 leading-tight">
-          Sell your car for what it's really worth
+          {uiState === "result"
+            ? "Your Car's Estimated Value"
+            : "Find out how much your car is worth in seconds"}
         </h1>
 
-        <form onSubmit={handleSubmit} className="relative">
-          <div className="flex flex-col sm:flex-row items-stretch bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-transparent transition-all">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={regNumber}
-                onChange={(e) =>
-                  setRegNumber(e.target.value.trim().toUpperCase())
-                }
-                placeholder="Enter registration"
-                className="w-full px-6 py-6 text-lg md:text-xl font-medium outline-none text-gray-900 placeholder:text-gray-400"
-                maxLength={10}
-                aria-label="Vehicle registration number"
-                autoCapitalize="characters"
-              />
-              {regNumber && (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition p-1"
-                  aria-label="Clear registration"
-                >
-                  <CloseIcon className="w-6 h-6" />
-                </button>
-              )}
-            </div>
+        {/* registration input form. should always be visible unless we have a result to show or we are in the middle of looking up the car details, in which case we show the loading spinner instead */}
 
-            <button
-              type="submit"
-              className="px-8 py-6 bg-teal-500 hover:bg-teal-600 text-white font-semibold text-lg transition-colors flex items-center justify-center gap-3 min-w-[160px]"
-              disabled={!regNumber.trim()}
+        {uiState !== "result" && (
+          <form onSubmit={handleSubmit} className="relative">
+            <div
+              className={`flex flex-col sm:flex-row items-stretch bg-white rounded-2xl shadow-lg border overflow-hidden transition-all ${uiState === "loading" ? "opacity-50 pointer-events-none border-teal-300" : "border-gray-200 focus-within:ring-teal-500 focus-within:border-transparent"}
+            `}
             >
-              <Search className="w-6 h-6" />
-              Get valuation
-            </button>
-          </div>
-        </form>
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={regNumber}
+                  onChange={(e) => {
+                    setRegNumber(formatRegNumber(e.target.value));
+                    //If user edits registration number after entering, RESET TO IDLE state
+                    if (uiState !== "idle") handleReset();
+                  }}
+                  placeholder="Enter registration"
+                  className="w-full px-6 py-6 text-lg md:text-xl font-medium outline-none text-gray-900 placeholder:text-gray-400"
+                  maxLength={10}
+                  aria-label="Vehicle registration number"
+                  autoCapitalize="characters"
+                />
+                {regNumber && uiState === "idle" && (
+                  <button 
+                    type="button"
+                    onClick={handleReset}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition p-1"
+                    aria-label="Clear registration"
+                  >
+                    <CloseIcon className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="px-8 py-6 bg-teal-500 hover:bg-teal-600 text-white font-semibold text-lg transition-colors flex items-center justify-center gap-3 min-w-40 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!regNumber.trim() || uiState === "loading"}
+              >
+                <Search className="w-6 h-6" />
+                Get valuation
+                {uiState === "loading" ? "looking up..." : "Get Valuation"}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* popular examples for the customer */}
         <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-gray-600">
           <span>Popular examples:</span>
           <button
             type="button"
-            onClick={() => setRegNumber("AB12CDE")}
+            onClick={() => setRegNumber("KDY 123R")}
             className="hover:text-teal-600 transition"
           >
             KDY 123R
@@ -769,12 +887,56 @@ const CarSearchBox = () => {
           <span className="w-1 h-1 bg-gray-300 rounded-full" />
           <button
             type="button"
-            onClick={() => setRegNumber("XY78ZYX")}
+            onClick={() => setRegNumber("KDW 726U")}
             className="hover:text-teal-600 transition"
           >
-            KDX 546U
+            KDW 726U
           </button>
         </div>
+
+
+        {/* Dynamic area content that changes based on the current step in the flow (confirmation, condition selection, location selection, result) */}
+        {uiState === "loading" && <LoadingSpinner />}
+        {uiState === "Not Found!" && <NotFound regNumber={regNumber} onReset={handleReset} onTryAgain={() => setUiState("idle")} />}
+        {uiState === "confirm" && carData && (
+          <ConfirmCard 
+            carData={carData}
+            regNumber={regNumber.trim().toUpperCase()}
+            onConfirm={handleConfirm}
+            onNotMyCar={() => setUiState("not_my_car")}
+          />
+        )}
+        {uiState === "not_my_car" && (
+          <div className="mt-6 bg-blue-200 border border-blue-400 rounded-2xl p-5 text-center">
+            <p className="text-blue-600 font-medium mb-3">
+              No problem - If details are incorrect, double-check the plate and try again.
+            </p>
+            <button
+              onClick={() => { setUiState("idle");setRegNumber('');}}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
+            >
+              Try a different reg
+            </button>
+          </div>
+        )}
+
+        {uiState === "condition" && (
+          <ConditionPicker value={condition} onChange={handleConditionSelect} />
+        )}
+
+        {uiState === "location" && (
+          <LocationPicker value={location} onChange={handleLocationSelect} />
+        )}
+
+        {uiState === "result" && result && (
+          <ValuationResult 
+            result={result}
+            carData={carData}
+            condition={condition}
+            location={location}
+            onReset={handleReset}
+          />
+        )}
 
         {/* Brand expectations/ customer trust*/}
         <div className="mt-8 pt-6 border-t border-gray-100 flex flex-wrap gap-6 text-sm text-gray-600">
