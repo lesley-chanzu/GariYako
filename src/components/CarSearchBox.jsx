@@ -174,13 +174,13 @@ const CarDatabase = {
       2015: 520000,
     },
     Auris: {
-      2020: 1800000,
+      2020: 2800000,
       2019: 1600000,
       2018: 1400000,
       2017: 1200000,
       2016: 1000000,
-      2015: 850000,
-      2014: 750000,
+      2015: 1300000,
+      2014: 1150000,
     },
   },
   Mazda: {
@@ -251,8 +251,8 @@ const CarDatabase = {
       2017: 680000,
       2016: 600000,
       2015: 530000,
-    },    
-   Sunny: {
+    },
+    Sunny: {
       2020: 900000,
       2019: 800000,
       2018: 720000,
@@ -311,13 +311,13 @@ const CarDatabase = {
 //rule 2. => The Mileage Penalty - For every 10,000km above 50,000km, reduce the value by 5%
 //==========================================
 function getMileeageFactor(mileageKm, ageYears) {
-  const expected = ageYears * 15000; // driver expected to drive 15000km per year (estimate)
+  const expected = ageYears * 12000; // driver expected to drive 15000km per year (estimate)
   const difference = mileageKm - expected;
   const penaltyUnits = difference / 10000;
   //if mileage is above expected, apply a penalty of 2.5% per unit, up to a max of 30%
-  if (difference > 0) return Math.max(-0.3, penaltyUnits * -0.025);
+  if (difference > 0) return Math.max(-0.20, penaltyUnits * -0.015);
   //if mileage is below expected, apply a bonus of 1.5% per unit, up to a max of 10% (+0.015 per km, but never more than +0.10 total)
-  return Math.min(0.1, Math.abs(penaltyUnits) * 0.015);
+  return Math.min(0.10, Math.abs(penaltyUnits) * 0.01);
 }
 
 //rule 3. => Age depreciation - For every year of age, reduce the value by 15%(1) => 4, then 5% for each additional year after that
@@ -327,18 +327,55 @@ function getAgeDepreciationFactor(ageYears) {
   //loop throughout the car's age, applying the appropriate depreciation for each year
   for (let i = 1; i <= ageYears; i++) {
     if (i === 1)
-      total += 0.15; // 15% depreciation for the first year
+      total += 0.10; // 10% depreciation for the first year
     else if (i === 2)
-      total += 0.12; // 12% for the second year
+      total += 0.08; // 6% for the second year
     else if (i <= 4)
-      total += 0.1; // 10% for the third and fourth year
-    else total += 0.05; // 5% for each year after the fourth
+      total += 0.07; // 7% for the third and fourth year
+    else if (i <= 7)
+      total += 0.05; // 5% for the fifth to seventh year
+    else total += 0.03; // 3% for each year after the fourth
   }
-  //return total but never more than 70%
-  return Math.min(0.7, total);
+  //return total but never more than 60%
+  return Math.min(0.60, total);
 }
 
-//rule 4. => Condition multiplier
+//rule 5. => Base Kenyan Market Multiplier - Cars in Kenya are typically 20-40% more expensive than international market
+//============================================
+function getKenyaMarketMultiplier() {
+  // Cars in Kenya are typically 20-40% more expensive than international market
+  return 1.3; // 30% premium for Kenyan market
+}
+
+//The car/brand model factor also affects the price, for example, a Toyota is 
+// generally more valuable than a less popular brand, and within Toyota, 
+// a Prado is more valuable than a Vitz. This is already built into our CarDatabase base prices, 
+// but we could also add an additional multiplier here if we wanted to further differentiate between models 
+// or brands based on demand and popularity in the Kenyan market.
+const brandMultiplier = {
+  toyota: 1.15,    // Toyota holds value best
+  honda: 1.10,
+  nissan: 1.05,
+  mazda: 1.05,
+  subaru: 1.12,
+  mitsubishi: 1.05,
+  mercedes: 0.95,  // Expensive maintenance in Kenya
+  bmw: 0.90,
+  audi: 0.88,
+  volkswagen: 1.02,
+  other: 0.98
+};
+
+//Import status factor is another factor. fresh imports from japan/uk commands premium in Kenya, 
+// while older imports or locally assembled cars may be worth less. 
+// This could be another multiplier we apply based on the car's history and import status, if that data is available.
+const importStatusMultiplier = {
+  "locally_used": 1.0,    // Already in Kenya
+  "fresh_import": 1.15,    // Fresh import from Japan/UK commands premium
+  "rebuilt": 0.85          // Rebuilt status reduces value
+};
+
+//rule 5. => Condition multiplier
 const conditionsMultiplier = [
   {
     id: "excellent",
@@ -370,7 +407,7 @@ const conditionsMultiplier = [
   },
 ];
 
-//rule 5. => Location multiplier - cars in high-demand areas may fetch a higher price, while those in less desirable locations may be worth less
+//rule 6. => Location multiplier - cars in high-demand areas may fetch a higher price, while those in less desirable locations may be worth less
 const locationsMultiplier = [
   { id: "nairobi", label: "Nairobi", emoji: "🏙️", multiplier: 1.0 },
   { id: "mombasa", label: "Mombasa", emoji: "🌊", multiplier: 0.97 },
@@ -381,7 +418,7 @@ const locationsMultiplier = [
   { id: "other", label: "Other", emoji: "📍", multiplier: 0.91 },
 ];
 
-//rule 6. => build +-12% flexibility into the final valuation to account for market fluctuations and buyer/seller negotiation room
+//rule 7. => build +-12% flexibility into the final valuation to account for market fluctuations and buyer/seller negotiation room
 //Not to show the exact figures of the car's value, but rather a range that gives the user an idea of what to expect when selling their car,
 // while also allowing for some flexibility in the market and negotiations with buyers.
 function buildRange(mid) {
@@ -397,21 +434,34 @@ function calculateValuation({
   make,
   model,
   year,
-  mileage,
+  mileage,  
   condition,
   location,
+  importStatus,
 }) {
   const currentYear = new Date().getFullYear();
   const age = currentYear - parseInt(year);
   const basePrice = CarDatabase[make]?.[model]?.[year];
-  if (!basePrice) return null; // if we don't have data for this car, return null
+  if (!basePrice) return null; // if we don't have data for this car, return null//currently disable cause it may be controversial , interfere with the base price and make the valuation less accurate,
 
-  let price = basePrice * (1 - getAgeDepreciationFactor(age)); // apply age depreciation
+  let price = basePrice;
+
+  // let price = basePrice * (1 - getAgeDepreciationFactor(age)); // apply age depreciation
   price = price * (1 + getMileeageFactor(parseInt(mileage), age)); // apply mileage factor
+  price = price * getKenyaMarketMultiplier(); // apply Kenya market premium
+  const brandMult = brandMultiplier[make.toLowerCase()] || brandMultiplier.other;
+  price = price * brandMult;
+  const importMult = importStatusMultiplier[importStatus] || importStatusMultiplier.locally_used;
+  price = price * importMult; // apply import status multiplier
+
   price =
     price * conditionsMultiplier.find((c) => c.id === condition)?.multiplier; // apply condition multiplier
   price =
     price * locationsMultiplier.find((l) => l.id === location)?.multiplier; // apply location multiplier
+
+//Adding a minimum value protection that will make the car not go below a certain threshold
+  const minimumValue = basePrice * 0.25; // Never go below 25% of base
+  price = Math.max(minimumValue, price);
 
   return buildRange(price); // return the final valuation range
 }
@@ -541,7 +591,69 @@ function LocationPicker({ value, onChange }) {
             <div className="text-xl mb-1">{l.emoji}</div>
             <div className="font-semibold text-gray-800 text-sm">{l.label}</div>
             <div className="text-sm text-gray-400">
-              {l.multiplier === 1 ? `top demand` : "${l.multiplier"}
+              {l.multiplier === 1 ? `top demand` : `${(l.multiplier - 1) * 100}% demand`}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+//==============================
+//step.4 => Import Status Picker
+//==============================
+function ImportStatusPicker({ value, onChange }) {
+  const importStatusOptions = [
+    {
+      id: "locally_used",
+      label: "Locally Used",
+      emoji: "🇰🇪",
+      desc: "Already in Kenya",
+      multiplier: 1.0,
+    },
+    {
+      id: "fresh_import",
+      label: "Fresh Import",
+      emoji: "✈️",
+      desc: "Fresh import from Japan/UK",
+      multiplier: 1.15,
+    },
+    {
+      id: "rebuilt",
+      label: "Rebuilt",
+      emoji: "🔧",
+      desc: "Rebuilt status",
+      multiplier: 0.85,
+    },
+  ];
+
+  return (
+    <div className="mt-6 animate-fade-in">
+      <h3 className="text-lg font-bold text-gray-900 mb-1">
+        What's the import status?
+      </h3>
+      <p className="text-gray-500 text-sm mb-4">
+        Fresh imports command a premium; rebuilt cars are valued lower
+      </p>
+      <div className="grid grid-cols-2 gap-3">
+        {importStatusOptions.map((option) => (
+          <button
+            key={option.id}
+            onClick={() => onChange(option.id)}
+            className={`p-3 rounded-xl border-2 text-left transition-all duration-200
+              ${value === option.id ? `border-teal-500 bg-teal-50 shadow-sm` : `border-gray-200 bg-white hover:border-gray-300`}
+              `}
+          >
+            <div className="text-xl mb-1">{option.emoji}</div>
+            <div className="font-semibold text-gray-800 text-sm">{option.label}</div>
+            <div className="text-xs text-gray-400 mt-1">{option.desc}</div>
+            <div className={`text-xs font-bold mt-2 ${option.multiplier > 1 ? "text-emerald-600" : option.multiplier < 1 ? "text-red-500" : "text-gray-600"}`}>
+              {option.multiplier > 1
+                ? `+${((option.multiplier - 1) * 100).toFixed(0)}%`
+                : option.multiplier < 1
+                ? `${((option.multiplier - 1) * 100).toFixed(0)}%`
+                : "Base"}
             </div>
           </button>
         ))}
@@ -551,7 +663,7 @@ function LocationPicker({ value, onChange }) {
 }
 
 //================================
-//step.4 => Valuation Result
+//step.5 => Valuation Result
 //================================
 function ValuationResult({ onReset, condition, location, carData, result }) {
   const conditionObj = conditionsMultiplier.find((c) => c.id === condition);
@@ -672,7 +784,7 @@ function ValuationResult({ onReset, condition, location, carData, result }) {
       </button>
     </div>
   );
-};
+}
 
 // LOading spinner component to show while looking up the car details
 const LoadingSpinner = () => (
@@ -732,12 +844,13 @@ const CarSearchBox = () => {
   const [carData, setCarData] = useState(null);
   const [condition, setCarCondition] = useState("");
   const [location, setLocation] = useState("");
+  const [importStatus, setImportStatus] = useState("");
   const [result, setResult] = useState(null);
 
   const formatRegNumber = (value) => {
-    const cleaned = value.replace(/\s/g, '').toUpperCase();
+    const cleaned = value.replace(/\s/g, "").toUpperCase();
     if (cleaned.length <= 3) return cleaned;
-    return cleaned.slice(0, 3) + ' ' + cleaned.slice(3);
+    return cleaned.slice(0, 3) + " " + cleaned.slice(3);
   };
 
   //This is the reset function that clears everything and takes the user back to the beginning of the flow.
@@ -747,6 +860,7 @@ const CarSearchBox = () => {
     setCarData(null);
     setCarCondition("");
     setLocation("");
+    setImportStatus("");
     setResult(null);
   };
 
@@ -771,16 +885,22 @@ const CarSearchBox = () => {
     setUiState("condition");
   };
 
-  //step.3 => the condition is selected -> mob=ve to location selection/confirmation
+  //step.3 => the condition is selected -> move to location selection/confirmation
   const handleConditionSelect = (val) => {
     setCarCondition(val);
     //small delay/latency
     setTimeout(() => setUiState("location"), 500);
   };
 
-  //step.4 => location has been selected -> the engine now runs the calculations
+  //step.4 => location has been selected -> move to import status selection
   const handleLocationSelect = (val) => {
     setLocation(val);
+    setTimeout(() => setUiState("import-status"), 500);
+  };
+
+  //step.5 => import status has been selected -> run the valuation calculations
+  const handleImportStatusSelect = (val) => {
+    setImportStatus(val);
     setTimeout(() => {
       const res = calculateValuation({
         make: carData.make,
@@ -788,12 +908,15 @@ const CarSearchBox = () => {
         year: carData.year,
         mileage: carData.mileage,
         condition: condition,
-        location: val, //use val directly instead of state to avoid async update issues
+        location: location,
+        importStatus: val, //use val directly instead of state to avoid async update issues
       });
       setResult(res);
       setUiState("result");
     }, 500);
   };
+
+
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-0">
@@ -850,7 +973,7 @@ const CarSearchBox = () => {
                   autoCapitalize="characters"
                 />
                 {regNumber && uiState === "idle" && (
-                  <button 
+                  <button
                     type="button"
                     onClick={handleReset}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition p-1"
@@ -894,12 +1017,17 @@ const CarSearchBox = () => {
           </button>
         </div>
 
-
         {/* Dynamic area content that changes based on the current step in the flow (confirmation, condition selection, location selection, result) */}
         {uiState === "loading" && <LoadingSpinner />}
-        {uiState === "Not Found!" && <NotFound regNumber={regNumber} onReset={handleReset} onTryAgain={() => setUiState("idle")} />}
+        {uiState === "Not Found!" && (
+          <NotFound
+            regNumber={regNumber}
+            onReset={handleReset}
+            onTryAgain={() => setUiState("idle")}
+          />
+        )}
         {uiState === "confirm" && carData && (
-          <ConfirmCard 
+          <ConfirmCard
             carData={carData}
             regNumber={regNumber.trim().toUpperCase()}
             onConfirm={handleConfirm}
@@ -909,10 +1037,14 @@ const CarSearchBox = () => {
         {uiState === "not_my_car" && (
           <div className="mt-6 bg-blue-200 border border-blue-400 rounded-2xl p-5 text-center">
             <p className="text-blue-600 font-medium mb-3">
-              No problem - If details are incorrect, double-check the plate and try again.
+              No problem - If details are incorrect, double-check the plate and
+              try again.
             </p>
             <button
-              onClick={() => { setUiState("idle");setRegNumber('');}}
+              onClick={() => {
+                setUiState("idle");
+                setRegNumber("");
+              }}
               className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
             >
               Try a different reg
@@ -928,8 +1060,12 @@ const CarSearchBox = () => {
           <LocationPicker value={location} onChange={handleLocationSelect} />
         )}
 
+        {uiState === "import-status" && (
+          <ImportStatusPicker value={importStatus} onChange={handleImportStatusSelect} />
+        )}
+
         {uiState === "result" && result && (
-          <ValuationResult 
+          <ValuationResult
             result={result}
             carData={carData}
             condition={condition}
