@@ -7,6 +7,8 @@ import {
   ArrowLeft,
   AlertCircle,
 } from "lucide-react";
+import DetailsManually from "./DetailsManually";
+import ListingCar from "./ListingCar";
 
 //Craeting the valuation engine
 //FLOW:
@@ -174,13 +176,13 @@ const CarDatabase = {
       2015: 520000,
     },
     Auris: {
-      2020: 2800000,
-      2019: 1600000,
-      2018: 1400000,
-      2017: 1200000,
-      2016: 1000000,
-      2015: 1300000,
-      2014: 1150000,
+      2020: 2000000,
+      2019: 1750000,
+      2018: 1550000,
+      2017: 1350000,
+      2016: 1150000,
+      2015: 950000,
+      2014: 850000,
     },
   },
   Mazda: {
@@ -441,8 +443,11 @@ function calculateValuation({
 }) {
   const currentYear = new Date().getFullYear();
   const age = currentYear - parseInt(year);
-  const basePrice = CarDatabase[make]?.[model]?.[year];
-  if (!basePrice) return null; // if we don't have data for this car, return null//currently disable cause it may be controversial , interfere with the base price and make the valuation less accurate,
+  let basePrice = CarDatabase[make]?.[model]?.[year];
+  if (!basePrice) {
+    // Fallback for cars not in database - estimate based on average car price
+    basePrice = 1500000; // Average car price in Kenya
+  }
 
   let price = basePrice;
 
@@ -591,7 +596,7 @@ function LocationPicker({ value, onChange }) {
             <div className="text-xl mb-1">{l.emoji}</div>
             <div className="font-semibold text-gray-800 text-sm">{l.label}</div>
             <div className="text-sm text-gray-400">
-              {l.multiplier === 1 ? `top demand` : `${(l.multiplier - 1) * 100}% demand`}
+              {l.multiplier === 1 ? `top demand` : `least popular demand`}
             </div>
           </button>
         ))}
@@ -665,7 +670,7 @@ function ImportStatusPicker({ value, onChange }) {
 //================================
 //step.5 => Valuation Result
 //================================
-function ValuationResult({ onReset, condition, location, carData, result }) {
+function ValuationResult({ onReset, condition, location, carData, result, onListCar }) {
   const conditionObj = conditionsMultiplier.find((c) => c.id === condition);
   const locationObj = locationsMultiplier.find((l) => l.id === location);
 
@@ -718,7 +723,7 @@ function ValuationResult({ onReset, condition, location, carData, result }) {
           {
             label: `Base price — ${carData.make} ${carData.model} ${carData.year}`,
             value: formatCurrency(
-              CarDatabase[carData.make]?.[carData.model]?.[carData.year] ?? 0,
+              CarDatabase[carData.make]?.[carData.model]?.[carData.year] || 1500000,
             ),
             color: "text-gray-700",
           },
@@ -772,7 +777,10 @@ function ValuationResult({ onReset, condition, location, carData, result }) {
       </div>
 
       {/* //the reset button/CTAs  */}
-      <button className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-teal-100 mb-3">
+      <button 
+        onClick={onListCar}
+        className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 rounded-2xl text-base transition-colors shadow-lg shadow-teal-100 mb-3"
+      >
         List My Car &amp; Get Real Bids
       </button>
       <button
@@ -846,6 +854,8 @@ const CarSearchBox = () => {
   const [location, setLocation] = useState("");
   const [importStatus, setImportStatus] = useState("");
   const [result, setResult] = useState(null);
+  const [manualCarData, setManualCarData] = useState({ make: "", model: "", year: "", mileage: "" });
+  const [listingData, setListingData] = useState({ name: "", email: "", phone: "", description: "" });
 
   const formatRegNumber = (value) => {
     const cleaned = value.replace(/\s/g, "").toUpperCase();
@@ -862,6 +872,38 @@ const CarSearchBox = () => {
     setLocation("");
     setImportStatus("");
     setResult(null);
+    setManualCarData({ make: "", model: "", year: "", mileage: "" });
+    setListingData({ name: "", email: "", phone: "", description: "" });
+  };
+
+  // Handle entering manual details
+  const handleEnterManual = () => {
+    setUiState("manual");
+  };
+
+  // Handle manual details submission
+  const handleManualSubmit = (data) => {
+    setCarData(data);
+    setUiState("condition");
+  };
+
+  // Handle listing the car
+  const handleListCar = () => {
+    setUiState("listing");
+  };
+
+  // Handle listing submission
+  const handleListingSubmit = (data) => {
+    // Here you would typically send the data to a backend
+    console.log("Listing car with data:", {
+      carData,
+      condition,
+      location,
+      importStatus,
+      result,
+      listingData: data
+    });
+    setUiState("listed");
   };
 
   // step.1 => handling submitted registration number -> trigger lookup
@@ -1022,7 +1064,7 @@ const CarSearchBox = () => {
         {uiState === "Not Found!" && (
           <NotFound
             regNumber={regNumber}
-            onReset={handleReset}
+            onReset={handleEnterManual}
             onTryAgain={() => setUiState("idle")}
           />
         )}
@@ -1052,6 +1094,14 @@ const CarSearchBox = () => {
           </div>
         )}
 
+        {uiState === "manual" && (
+          <DetailsManually
+            manualCarData={manualCarData}
+            setManualCarData={setManualCarData}
+            onSubmit={handleManualSubmit}
+          />
+        )}
+
         {uiState === "condition" && (
           <ConditionPicker value={condition} onChange={handleConditionSelect} />
         )}
@@ -1071,7 +1121,41 @@ const CarSearchBox = () => {
             condition={condition}
             location={location}
             onReset={handleReset}
+            onListCar={handleListCar}
           />
+        )}
+
+        {uiState === "listing" && (
+          <ListingCar
+            carData={carData}
+            result={result}
+            condition={condition}
+            location={location}
+            importStatus={importStatus}
+            listingData={listingData}
+            setListingData={setListingData}
+            onSubmit={handleListingSubmit}
+            onBack={() => setUiState("result")}
+          />
+        )}
+
+        {uiState === "listed" && (
+          <div className="mt-6 bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-green-900 mb-2">Car Listed Successfully!</h3>
+            <p className="text-green-700 mb-4">
+              Your {carData.year} {carData.make} {carData.model} has been listed for bids.
+              We'll notify you when potential buyers show interest.
+            </p>
+            <button
+              onClick={handleReset}
+              className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            >
+              List Another Car
+            </button>
+          </div>
         )}
 
         {/* Brand expectations/ customer trust*/}
